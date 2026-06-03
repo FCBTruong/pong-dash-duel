@@ -45,6 +45,7 @@ void APongPaddle::BeginPlay()
 	Super::BeginPlay();
 	ConfigureCollision();
 	InitialLocation = GetActorLocation();
+	BaseHalfHeight = HalfHeight;
 	ClampPosition();
 }
 
@@ -68,6 +69,19 @@ void APongPaddle::ResetPaddle()
 float APongPaddle::GetHalfHeight() const
 {
 	return HalfHeight;
+}
+
+void APongPaddle::SetPaddleSizeMultiplier(float NewSizeMultiplier)
+{
+	const float ClampedMultiplier = FMath::Max(NewSizeMultiplier, 0.1f);
+	HalfHeight = BaseHalfHeight * ClampedMultiplier;
+	CollisionComponent->SetBoxExtent(FVector(HalfHeight, HalfWidth, HalfDepth));
+	MeshComponent->SetRelativeScale3D(FVector(HalfHeight, HalfWidth, HalfDepth) / 50.0f);
+}
+
+void APongPaddle::SetBallHitSpeedMultiplier(float NewSpeedMultiplier)
+{
+	BallHitSpeedMultiplier = FMath::Max(NewSpeedMultiplier, 0.1f);
 }
 
 void APongPaddle::Move(float DeltaTime)

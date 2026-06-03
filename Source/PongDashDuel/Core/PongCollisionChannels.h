@@ -8,3 +8,4 @@
 #define COLLISION_PADDLE ECC_GameTraceChannel2
 #define COLLISION_WALL ECC_GameTraceChannel3
 #define COLLISION_GOALZONE ECC_GameTraceChannel4
+#define COLLISION_POWERUP ECC_GameTraceChannel5

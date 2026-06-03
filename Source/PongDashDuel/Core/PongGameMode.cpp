@@ -11,12 +11,17 @@
 #include "../Core/PongGameDataAsset.h"
 #include "../Gameplay/PongBall.h"
 #include "../Gameplay/PongPaddle.h"
+#include "../PowerUps/WorldObjects/PongDefenseShield.h"
+#include "../PowerUps/WorldObjects/PongPowerProjectile.h"
+#include "../PowerUps/PongPowerUpComponent.h"
+#include "../PowerUps/PongPowerUpItem.h"
 #include "../UI/PongHUDWidget.h"
 
 APongGameMode::APongGameMode()
 {
 	PlayerControllerClass = APongPlayerController::StaticClass();
 	DefaultPawnClass = nullptr;
+	PowerUpComponent = CreateDefaultSubobject<UPongPowerUpComponent>(TEXT("PowerUpComponent"));
 }
 
 void APongGameMode::BeginPlay()
@@ -29,6 +34,7 @@ void APongGameMode::BeginPlay()
 
 	CacheGameplayActors();
 	CreateHUD();
+	ResetPaddles();
 	ResetRound();
 }
 
@@ -41,11 +47,11 @@ void APongGameMode::ScorePoint(EPongPlayer ScoringPlayer)
 
 	if (ScoringPlayer == EPongPlayer::Player1)
 	{
-		++Player1Score;
+		Player1Score += GetScoreMultiplier(EPongPlayer::Player1);
 	}
 	else
 	{
-		++Player2Score;
+		Player2Score += GetScoreMultiplier(EPongPlayer::Player2);
 	}
 
 	LastScoringPlayer = ScoringPlayer;
@@ -78,21 +84,13 @@ void APongGameMode::ScorePoint(EPongPlayer ScoringPlayer)
 void APongGameMode::ResetRound()
 {
 	MatchState = EPongMatchState::Playing;
-	bWaitingForServeInput = true;
-
-	if (Player1Paddle)
-	{
-		Player1Paddle->ResetPaddle();
-	}
-
-	if (Player2Paddle)
-	{
-		Player2Paddle->ResetPaddle();
-	}
+	bWaitingForServeInput = false;
+	GetWorldTimerManager().ClearTimer(BallAppearTimerHandle);
 
 	if (Ball)
 	{
-		Ball->ResetBall();
+		Ball->ResetBallHidden();
+		Ball->PlaySpawnFeedback();
 	}
 
 	if (HUDWidget)
@@ -101,6 +99,19 @@ void APongGameMode::ResetRound()
 	}
 
 	UpdateHUD();
+
+	GetWorldTimerManager().SetTimer(BallAppearTimerHandle, this, &APongGameMode::ShowRoundBall, BallAppearDelay, false);
+}
+
+void APongGameMode::ShowRoundBall()
+{
+	if (MatchState != EPongMatchState::Playing || !Ball)
+	{
+		return;
+	}
+
+	Ball->ShowBall();
+	bWaitingForServeInput = true;
 }
 
 void APongGameMode::LaunchRoundBall()
@@ -131,6 +142,7 @@ void APongGameMode::EndMatch(EPongPlayer Winner)
 	{
 		Ball->HideBall();
 	}
+	GetWorldTimerManager().ClearTimer(BallAppearTimerHandle);
 	bWaitingForServeInput = false;
 
 	if (HUDWidget)
@@ -143,10 +155,46 @@ void APongGameMode::EndMatch(EPongPlayer Winner)
 
 void APongGameMode::RestartMatch()
 {
+	ClearPowerUpState();
 	Player1Score = 0;
 	Player2Score = 0;
+	Player1ScoreMultiplier = 1;
+	Player2ScoreMultiplier = 1;
 	LastScoringPlayer = EPongPlayer::Player2;
+	ResetPaddles();
 	ResetRound();
+}
+
+void APongGameMode::ClearPowerUpState()
+{
+	if (PowerUpComponent)
+	{
+		PowerUpComponent->ClearAllPowerUps();
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	for (TActorIterator<APongPowerUpItem> ItemIterator(World); ItemIterator; ++ItemIterator)
+	{
+		APongPowerUpItem* Item = *ItemIterator;
+		if (Item && !Item->IsActorBeingDestroyed())
+		{
+			Item->Destroy();
+		}
+	}
+
+	for (TActorIterator<APongPowerProjectile> ProjectileIterator(World); ProjectileIterator; ++ProjectileIterator)
+	{
+		APongPowerProjectile* Projectile = *ProjectileIterator;
+		if (Projectile && !Projectile->IsActorBeingDestroyed())
+		{
+			Projectile->Destroy();
+		}
+	}
 }
 
 void APongGameMode::UpdateHUD()
@@ -154,6 +202,51 @@ void APongGameMode::UpdateHUD()
 	if (HUDWidget)
 	{
 		HUDWidget->SetScore(Player1Score, Player2Score);
+	}
+}
+
+void APongGameMode::NotifyPowerUpStarted(EPongPlayer TargetPlayer, UPongPowerUpEffect* Effect, const UPongPowerUpDataAsset* PowerUpData, float TotalDuration)
+{
+	if (HUDWidget)
+	{
+		HUDWidget->AddPowerUp(TargetPlayer, Effect, PowerUpData, TotalDuration);
+	}
+}
+
+void APongGameMode::NotifyPowerUpRefreshed(UPongPowerUpEffect* Effect, float TotalDuration)
+{
+	if (HUDWidget)
+	{
+		HUDWidget->RefreshPowerUp(Effect, TotalDuration);
+	}
+}
+
+void APongGameMode::NotifyPowerUpRemoved(UPongPowerUpEffect* Effect)
+{
+	if (HUDWidget)
+	{
+		HUDWidget->RemovePowerUp(Effect);
+	}
+}
+
+void APongGameMode::NotifyPowerUpProgress(UPongPowerUpEffect* Effect, float RemainingTime)
+{
+	if (HUDWidget)
+	{
+		HUDWidget->UpdatePowerUpProgress(Effect, RemainingTime);
+	}
+}
+
+void APongGameMode::ResetPaddles()
+{
+	if (Player1Paddle)
+	{
+		Player1Paddle->ResetPaddle();
+	}
+
+	if (Player2Paddle)
+	{
+		Player2Paddle->ResetPaddle();
 	}
 }
 
@@ -193,11 +286,72 @@ APongPaddle* APongGameMode::GetPaddle(EPongPlayer Player) const
 	return nullptr;
 }
 
+APongPaddle* APongGameMode::GetOpponentPaddle(EPongPlayer Player) const
+{
+	if (Player == EPongPlayer::Player1)
+	{
+		return Player2Paddle;
+	}
+
+	if (Player == EPongPlayer::Player2)
+	{
+		return Player1Paddle;
+	}
+
+	return nullptr;
+}
+
+APongDefenseShield* APongGameMode::GetShield(EPongPlayer Player) const
+{
+	if (Player == EPongPlayer::Player1)
+	{
+		return Player1Shield;
+	}
+
+	if (Player == EPongPlayer::Player2)
+	{
+		return Player2Shield;
+	}
+
+	return nullptr;
+}
+
+void APongGameMode::SetScoreMultiplier(EPongPlayer Player, int32 NewMultiplier)
+{
+	const int32 SafeMultiplier = FMath::Max(NewMultiplier, 1);
+
+	if (Player == EPongPlayer::Player1)
+	{
+		Player1ScoreMultiplier = SafeMultiplier;
+	}
+	else if (Player == EPongPlayer::Player2)
+	{
+		Player2ScoreMultiplier = SafeMultiplier;
+	}
+}
+
+int32 APongGameMode::GetScoreMultiplier(EPongPlayer Player) const
+{
+	if (Player == EPongPlayer::Player1)
+	{
+		return Player1ScoreMultiplier;
+	}
+
+	if (Player == EPongPlayer::Player2)
+	{
+		return Player2ScoreMultiplier;
+	}
+
+	return 1;
+}
+
 void APongGameMode::CacheGameplayActors()
 {
 	Ball = nullptr;
 	Player1Paddle = nullptr;
 	Player2Paddle = nullptr;
+	Player1Shield = nullptr;
+	Player2Shield = nullptr;
 
 	for (TActorIterator<APongBall> It(GetWorld()); It; ++It)
 	{
@@ -215,6 +369,19 @@ void APongGameMode::CacheGameplayActors()
 		else if (Paddle->GetOwningPlayer() == EPongPlayer::Player2)
 		{
 			Player2Paddle = Paddle;
+		}
+	}
+
+	for (TActorIterator<APongDefenseShield> It(GetWorld()); It; ++It)
+	{
+		APongDefenseShield* Shield = *It;
+		if (Shield->GetOwningPlayer() == EPongPlayer::Player1)
+		{
+			Player1Shield = Shield;
+		}
+		else if (Shield->GetOwningPlayer() == EPongPlayer::Player2)
+		{
+			Player2Shield = Shield;
 		}
 	}
 }

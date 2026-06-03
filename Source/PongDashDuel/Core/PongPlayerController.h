@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PongTypes.h"
 #include "GameFramework/PlayerController.h"
 #include "PongPlayerController.generated.h"
 
@@ -10,6 +11,7 @@ class APongGameMode;
 class APongPaddle;
 class UInputAction;
 class UInputMappingContext;
+class UPongPowerUpDataAsset;
 struct FInputActionValue;
 
 UCLASS()
@@ -24,11 +26,13 @@ public:
 
 	void MovePlayer1(const FInputActionValue& Value);
 	void MovePlayer2(const FInputActionValue& Value);
+	void StopPlayer1(const FInputActionValue& Value);
+	void StopPlayer2(const FInputActionValue& Value);
 	void Restart(const FInputActionValue& Value);
+	void CheatGiveBulletPowerUp();
 
 private:
 	void CacheReferences();
-	void ClearStaleMoveInput();
 
 	UPROPERTY()
 	TObjectPtr<APongGameMode> PongGameMode;
@@ -51,6 +55,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> RestartAction;
 
-	uint64 LastPlayer1MoveFrame = 0;
-	uint64 LastPlayer2MoveFrame = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Cheat")
+	TObjectPtr<UPongPowerUpDataAsset> CheatBulletPowerUpData;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Cheat")
+	EPongPlayer CheatBulletTargetPlayer = EPongPlayer::Player1;
 };

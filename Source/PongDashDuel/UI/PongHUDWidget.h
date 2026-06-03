@@ -8,7 +8,23 @@
 #include "PongHUDWidget.generated.h"
 
 class UTextBlock;
+class UPanelWidget;
 class UWidgetAnimation;
+class UPongPowerUpDataAsset;
+class UPongPowerUpEffect;
+class UPongPowerUpItemWidget;
+
+USTRUCT()
+struct FPongPowerUpWidgetEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UPongPowerUpEffect> Effect;
+
+	UPROPERTY()
+	TObjectPtr<UPongPowerUpItemWidget> Widget;
+};
 
 UCLASS()
 class PONGDASHDUEL_API UPongHUDWidget : public UUserWidget
@@ -25,6 +41,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void HideWinner();
 
+	void AddPowerUp(EPongPlayer TargetPlayer, UPongPowerUpEffect* Effect, const UPongPowerUpDataAsset* PowerUpData, float TotalDuration);
+	void RefreshPowerUp(UPongPowerUpEffect* Effect, float TotalDuration);
+	void RemovePowerUp(UPongPowerUpEffect* Effect);
+	void UpdatePowerUpProgress(UPongPowerUpEffect* Effect, float RemainingTime);
+
 protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> ScoreText;
@@ -38,7 +59,22 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> RestartText;
 
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UPanelWidget> SbPower1;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UPanelWidget> SbPower2;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PowerUp")
+	TSubclassOf<UPongPowerUpItemWidget> PowerUpItemWidgetClass;
+
 private:
+	UPanelWidget* GetPowerUpPanel(EPongPlayer TargetPlayer) const;
+	UPongPowerUpItemWidget* FindPowerUpWidget(UPongPowerUpEffect* Effect) const;
+
+	UPROPERTY()
+	TArray<FPongPowerUpWidgetEntry> PowerUpWidgetEntries;
+
 	int32 CurrentPlayer1Score = 0;
 	int32 CurrentPlayer2Score = 0;
 	bool bHasScore = false;

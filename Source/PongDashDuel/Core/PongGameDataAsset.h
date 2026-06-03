@@ -22,6 +22,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
 	TObjectPtr<UParticleSystem> BounceImpactEffect;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
+	TObjectPtr<UNiagaraSystem> BallSpawnEffect;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Goal")
 	TObjectPtr<UNiagaraSystem> GoalExplosionEffect;
 

@@ -27,6 +27,9 @@ public:
 
 	EPongPlayer GetOwningPlayer() const { return OwningPlayer; }
 	float GetHalfHeight() const;
+	void SetPaddleSizeMultiplier(float NewSizeMultiplier);
+	float GetBallHitSpeedMultiplier() const { return BallHitSpeedMultiplier; }
+	void SetBallHitSpeedMultiplier(float NewSpeedMultiplier);
 
 protected:
 	void ConfigureCollision();
@@ -63,4 +66,6 @@ protected:
 private:
 	FVector InitialLocation = FVector::ZeroVector;
 	float MoveInput = 0.0f;
+	float BaseHalfHeight = 90.0f;
+	float BallHitSpeedMultiplier = 1.0f;
 };
