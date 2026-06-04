@@ -44,7 +44,6 @@ public:
 	void AddPowerUp(EPongPlayer TargetPlayer, UPongPowerUpEffect* Effect, const UPongPowerUpDataAsset* PowerUpData, float TotalDuration);
 	void RefreshPowerUp(UPongPowerUpEffect* Effect, float TotalDuration);
 	void RemovePowerUp(UPongPowerUpEffect* Effect);
-	void UpdatePowerUpProgress(UPongPowerUpEffect* Effect, float RemainingTime);
 
 protected:
 	UPROPERTY(meta = (BindWidgetOptional))

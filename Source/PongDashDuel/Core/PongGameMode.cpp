@@ -229,14 +229,6 @@ void APongGameMode::NotifyPowerUpRemoved(UPongPowerUpEffect* Effect)
 	}
 }
 
-void APongGameMode::NotifyPowerUpProgress(UPongPowerUpEffect* Effect, float RemainingTime)
-{
-	if (HUDWidget)
-	{
-		HUDWidget->UpdatePowerUpProgress(Effect, RemainingTime);
-	}
-}
-
 void APongGameMode::ResetPaddles()
 {
 	if (Player1Paddle)

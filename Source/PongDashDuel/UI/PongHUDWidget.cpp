@@ -116,14 +116,6 @@ void UPongHUDWidget::RemovePowerUp(UPongPowerUpEffect* Effect)
 	}
 }
 
-void UPongHUDWidget::UpdatePowerUpProgress(UPongPowerUpEffect* Effect, float RemainingTime)
-{
-	if (UPongPowerUpItemWidget* ItemWidget = FindPowerUpWidget(Effect))
-	{
-		ItemWidget->SetRemainingTime(RemainingTime);
-	}
-}
-
 UPanelWidget* UPongHUDWidget::GetPowerUpPanel(EPongPlayer TargetPlayer) const
 {
 	if (TargetPlayer == EPongPlayer::Player1)

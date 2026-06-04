@@ -9,7 +9,7 @@
 
 UPongPowerUpComponent::UPongPowerUpComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 bool UPongPowerUpComponent::ApplyPowerUp(const UPongPowerUpDataAsset* PowerUpData, EPongPlayer TargetPlayer, AActor* SourceItem)
@@ -47,26 +47,6 @@ void UPongPowerUpComponent::ClearAllPowerUps()
 	for (int32 Index = ActivePowerUps.Num() - 1; Index >= 0; --Index)
 	{
 		RemovePowerUpAtIndex(Index);
-	}
-}
-
-void UPongPowerUpComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	APongGameMode* GameMode = GetPongGameMode();
-	if (!GameMode || !GetWorld())
-	{
-		return;
-	}
-
-	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	for (const FActivePongPowerUp& ActivePowerUp : ActivePowerUps)
-	{
-		if (ActivePowerUp.Effect && ActivePowerUp.Data && ActivePowerUp.Data->Duration > 0.0f)
-		{
-			GameMode->NotifyPowerUpProgress(ActivePowerUp.Effect, FMath::Max(ActivePowerUp.EndTime - CurrentTime, 0.0f));
-		}
 	}
 }
 

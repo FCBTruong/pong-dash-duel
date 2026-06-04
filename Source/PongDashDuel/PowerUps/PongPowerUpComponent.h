@@ -49,7 +49,6 @@ public:
 	void ClearAllPowerUps();
 
 protected:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:

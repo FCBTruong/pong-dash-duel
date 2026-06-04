@@ -46,7 +46,6 @@ public:
 	void NotifyPowerUpStarted(EPongPlayer TargetPlayer, UPongPowerUpEffect* Effect, const UPongPowerUpDataAsset* PowerUpData, float TotalDuration);
 	void NotifyPowerUpRefreshed(UPongPowerUpEffect* Effect, float TotalDuration);
 	void NotifyPowerUpRemoved(UPongPowerUpEffect* Effect);
-	void NotifyPowerUpProgress(UPongPowerUpEffect* Effect, float RemainingTime);
 
 	APongPaddle* GetPaddle(EPongPlayer Player) const;
 	APongPaddle* GetOpponentPaddle(EPongPlayer Player) const;

@@ -18,6 +18,7 @@ class PONGDASHDUEL_API UPongPowerUpItemWidget : public UUserWidget
 public:
 	void InitializePowerUp(const UPongPowerUpDataAsset* PowerUpData, float InTotalDuration);
 	void SetRemainingTime(float RemainingTime);
+	virtual void NativeDestruct() override;
 
 protected:
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -27,5 +28,11 @@ protected:
 	TObjectPtr<UTextBlock> TimeLb;
 
 private:
+	void UpdateCountdownDisplay();
+	void StartOrStopCountdown();
+	void HandleCountdownTick();
+
 	float TotalDuration = 0.0f;
+	float EndTime = 0.0f;
+	FTimerHandle CountdownTimerHandle;
 };
